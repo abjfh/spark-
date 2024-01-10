@@ -14,9 +14,9 @@ public class DruidConfig {
         // 创建Druid数据源
         DruidDataSource dataSource = new DruidDataSource();
 
-        dataSource.setUrl("jdbc:mysql://localhost:3306/Enterprise");
+        dataSource.setUrl("jdbc:mysql://hadoop102:3306/enterprise?useSSL=false&amp;useUnicode=true&amp;characterEncoding=UTF-8");
         dataSource.setUsername("root");
-        dataSource.setPassword("123456");
+        dataSource.setPassword("123123");
 
         // 配置连接池参数
         dataSource.setInitialSize(5); // 初始化连接数

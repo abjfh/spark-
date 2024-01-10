@@ -1,0 +1,7 @@
+
+#启动kafak消费者
+kafka-console-consumer.sh --bootstrap-server hadoop102:9092 --topic Enterprise --group Enterprise_consumer
+
+#启动flume进程
+cd /opt/module/flume
+bin/flume-ng agent -n a1 -c conf/ -f /opt/module/flume/job/socket_to_kafka.conf -Dflume.root.logger=info,console

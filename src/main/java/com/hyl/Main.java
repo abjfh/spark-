@@ -29,14 +29,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Main {
 
     public static void main(String[] args) {
-        producer();
-
+        producer(getSize());
     }
 
+    static ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5, new ThreadPoolFactory("scheduledThread"));
+    static DruidDataSource druidDataSource = DruidConfig.getdataSource();
 
-    public static void producer() {
-        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5, new ThreadPoolFactory("scheduledThread"));
-        DruidDataSource druidDataSource = DruidConfig.getdataSource();
+    public static void producer(int size) {
+
         AtomicInteger atomicInteger = new AtomicInteger(1);
         executorService.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -44,7 +44,13 @@ public class Main {
                 DruidPooledConnection connection = null;
                 try {
                     connection = druidDataSource.getConnection();
-                    String sql = "select * from Enterprise.datadie limit " + atomicInteger.getAndAdd(1) * 100 + ",100";
+                    System.out.println(atomicInteger.get());
+                    if(size<atomicInteger.get()*100) {
+                        executorService.shutdown();
+                        return;
+                    }
+                    String sql = "select * from enterprise.datadie order by death_data limit "
+                            + atomicInteger.getAndAdd(1) * 100 + ",100";
 //                    System.out.println(sql);
                     ResultSet rs = connection.createStatement().executeQuery(sql);
                     if (rs != null) {
@@ -63,7 +69,7 @@ public class Main {
                                 String value = rs.getString(columnName);
                                 jsonObj.put(columnName, value);
                             }
-                            outputStream.write((jsonObj.toString()+"\n").getBytes(StandardCharsets.UTF_8));
+                            outputStream.write((jsonObj.toString() + "\n").getBytes(StandardCharsets.UTF_8));
                         }
                     }
                 } catch (SQLException e) {
@@ -83,6 +89,31 @@ public class Main {
                 }
             }
         }, 1, 1, TimeUnit.SECONDS);
+    }
+
+    public static int getSize() {
+
+        DruidPooledConnection connection = null;
+        String sql = "select count(*) from enterprise.datadie ";
+        try {
+            connection = druidDataSource.getConnection();
+            ResultSet rs = connection.createStatement().executeQuery(sql);
+            if (rs != null) {
+                rs.next();
+                return rs.getInt(1);
+            }
+            return -1;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
 }
 
